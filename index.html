@@ -3,533 +3,889 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحدي العملاقين: طويق vs Leap</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#06080e">
+    <title>طويق ضد لييب</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #090d16;
-            --panel-bg: rgba(30, 41, 59, 0.75);
-            --primary-tuwaiq: #3b82f6;
-            --primary-leap: #ef4444;
-            --success-green: #10b981;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: rgba(255, 255, 255, 0.1);
+            --bg: #06080e;
+            --surface: #0d111b;
+            --surface-2: #141927;
+            --surface-3: #1b2132;
+            --line: rgba(255, 255, 255, 0.07);
+            --line-strong: rgba(255, 255, 255, 0.14);
+            --text: #f2f4f8;
+            --muted: #8b94a7;
+            --faint: #5b6478;
+
+            --tuwaiq: #3b82f6;
+            --leap: #ef4444;
+            --safe: #10b981;
+
+            --radius: 18px;
+            --font-display: 'Noto Kufi Arabic', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+            --font-body: 'IBM Plex Sans Arabic', system-ui, sans-serif;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Cairo', sans-serif;
             -webkit-tap-highlight-color: transparent;
-            user-select: none;
         }
 
         body {
-            background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
-                radial-gradient(circle at 90% 90%, rgba(239, 68, 68, 0.12) 0%, transparent 40%);
-            color: var(--text-main);
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-body);
             min-height: 100vh;
+            min-height: 100dvh;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* توهج الفريقين في الخلفية: طويق يمين (أزرق) ولييب يسار (أحمر) */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background:
+                radial-gradient(55% 45% at 100% 0%, rgba(59, 130, 246, 0.22), transparent 70%),
+                radial-gradient(55% 45% at 0% 0%, rgba(239, 68, 68, 0.2), transparent 70%);
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+
+        /* ================= الهيدر: العنوان ولوحة النقاط ================= */
+        header {
+            transition: background 0.3s;
+        }
+
+        .arena {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: clamp(12px, 4vw, 40px);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: clamp(32px, 7vw, 64px) 16px clamp(8px, 2vw, 16px);
+        }
+
+        .team-side {
+            position: relative;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            gap: 2px;
         }
 
-        header {
+        .team-name {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: clamp(2.4rem, 11vw, 5rem);
+            line-height: 1.25;
+            transition: font-size 0.3s;
+        }
+
+        .tuwaiq .team-name,
+        .tuwaiq .team-score { color: var(--tuwaiq); text-shadow: 0 0 48px rgba(59, 130, 246, 0.5); }
+
+        .leap .team-name,
+        .leap .team-score { color: var(--leap); text-shadow: 0 0 48px rgba(239, 68, 68, 0.5); }
+
+        .vs {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: clamp(0.85rem, 2.8vw, 1.1rem);
+            color: var(--muted);
+            width: clamp(46px, 11vw, 64px);
+            aspect-ratio: 1;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 1px solid var(--line-strong);
+            box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.02);
+        }
+
+        .tagline {
             text-align: center;
-            padding: 20px 15px;
-            background: rgba(9, 13, 22, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border-color);
+            color: var(--muted);
+            font-size: clamp(0.9rem, 2.4vw, 1rem);
+            padding: 0 16px clamp(20px, 4vw, 32px);
+        }
+
+        .team-score {
+            display: none;
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: clamp(2.6rem, 12vw, 4.5rem);
+            line-height: 1.05;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* في شاشة اللعب يصير العنوان لوحة نقاط ثابتة فوق */
+        body[data-screen="game"] header {
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 50;
+            background: rgba(6, 8, 14, 0.8);
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--line);
+        }
+        body[data-screen="game"] .arena { padding: 12px 16px 14px; }
+        body[data-screen="game"] .team-name { font-size: clamp(1.05rem, 4.5vw, 1.6rem); }
+        body[data-screen="game"] .team-score { display: block; }
+        body[data-screen="game"] .tagline { display: none; }
+
+        .team-side.hit .team-score { animation: hit 0.55s ease; }
+
+        @keyframes hit {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.3); filter: brightness(1.7); }
+            100% { transform: scale(1); }
         }
 
-        header h1 {
-            font-size: clamp(1.4rem, 4vw, 2.2rem);
+        .minus-float {
+            position: absolute;
+            top: 42%;
+            left: calc(50% + clamp(22px, 7vw, 46px));
+            direction: ltr;
+            unicode-bidi: isolate;
+            font-family: var(--font-display);
             font-weight: 900;
-            background: linear-gradient(135deg, #60a5fa, #f87171, #34d399);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 4px;
+            font-size: 1.4rem;
+            color: #fff;
+            pointer-events: none;
+            animation: floatUp 0.9s ease-out forwards;
         }
 
-        header p {
-            color: var(--text-muted);
-            font-size: clamp(0.85rem, 2vw, 1rem);
+        @keyframes floatUp {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-44px); }
         }
 
-        .container {
-            flex: 1;
-            max-width: 1200px;
+        /* ================= عام ================= */
+        main {
+            max-width: 1100px;
             margin: 0 auto;
-            padding: 20px 15px;
-            width: 100%;
+            padding: 0 16px 40px;
         }
 
-        .screen {
-            display: none;
-            animation: fadeIn 0.4s ease forwards;
-        }
-
+        .screen { display: none; }
         .screen.active {
             display: block;
+            animation: fadeIn 0.35s ease;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: none; }
         }
 
-        /* --- لوحة الإعداد والإدارة --- */
-        .setup-card {
-            background: var(--panel-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: clamp(18px, 3vw, 24px);
         }
 
-        @media (min-width: 768px) {
-            .setup-card { padding: 35px; }
-        }
-
-        .setup-header {
+        .panel-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
+            gap: 12px;
+            margin-bottom: 18px;
         }
 
-        .setup-header h2 {
-            font-size: clamp(1.2rem, 3vw, 1.6rem);
-            color: #fff;
+        .panel-head h2 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .count {
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            font-weight: 700;
+            min-width: 26px;
+            padding: 2px 9px;
+            border-radius: 999px;
+            background: var(--surface-3);
+            color: var(--muted);
+            text-align: center;
         }
 
         .btn {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            color: white;
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 1rem;
             border: none;
-            padding: 12px 20px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            border-radius: 12px;
+            border-radius: 14px;
+            padding: 14px 22px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            color: var(--text);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            text-align: center;
+            transition: transform 0.15s, background 0.2s, box-shadow 0.2s, opacity 0.2s;
         }
+        .btn:active { transform: scale(0.97); }
+        .btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+        .btn[disabled] { opacity: 0.55; cursor: progress; }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        .btn-primary { background: #fff; color: var(--bg); }
+        .btn-primary:hover { background: #e3e7ef; }
+
+        .btn-ghost {
+            background: var(--surface-2);
+            border: 1px solid var(--line-strong);
         }
+        .btn-ghost:hover { background: var(--surface-3); }
 
-        .btn-success {
-            background: linear-gradient(135deg, #10b981, #059669);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-        }
-        .btn-success:hover { box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5); }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #ef4444, #b91c1c);
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-        }
-        .btn-danger:hover { box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5); }
-
-        .form-grid {
+        /* ================= شاشة الإعداد ================= */
+        .setup-layout {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-            background: rgba(9, 13, 22, 0.6);
-            padding: 15px;
-            border-radius: 14px;
-            border: 1px solid var(--border-color);
+            gap: 16px;
         }
 
-        @media (min-width: 768px) {
-            .form-grid {
-                grid-template-columns: repeat(2, 1fr) 1.2fr auto;
-                align-items: flex-end;
-                padding: 20px;
+        @media (min-width: 900px) {
+            .setup-layout {
+                grid-template-columns: 380px 1fr;
+                align-items: start;
             }
+            .add-panel { position: sticky; top: 16px; }
         }
 
-        .form-group {
+        .live {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--muted);
+        }
+        .live i {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #f59e0b;
+        }
+        .live.on i {
+            background: var(--safe);
+            animation: pulse 2s infinite;
+        }
+        .live.off i { background: var(--leap); }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .field {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
+            margin-bottom: 16px;
         }
 
-        label {
+        fieldset.field {
+            border: 0;
+            padding: 0;
+            min-width: 0;
+        }
+
+        .num {
+            direction: ltr;
+            unicode-bidi: isolate;
+            display: inline-block;
+        }
+
+        .field-label {
             font-size: 0.85rem;
-            color: var(--text-muted);
-            font-weight: 600;
+            font-weight: 500;
+            color: var(--muted);
         }
 
-        input, select {
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid var(--border-color);
-            padding: 12px 14px;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 0.95rem;
+        input[type="text"] {
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 13px 14px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1rem;
             outline: none;
             width: 100%;
-            transition: border-color 0.3s;
+            user-select: text;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input[type="text"]::placeholder { color: var(--faint); }
+        input[type="text"]:focus {
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+        }
+        input[type="text"].invalid {
+            border-color: var(--leap);
+            animation: shake 0.35s;
         }
 
-        input:focus, select:focus {
-            border-color: #60a5fa;
+        @keyframes shake {
+            25% { transform: translateX(-6px); }
+            50% { transform: translateX(6px); }
+            75% { transform: translateX(-3px); }
         }
 
-        .buttons-list-container {
+        .color-pick {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            max-height: 380px;
-            overflow-y: auto;
-            padding: 5px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            border: none;
         }
 
-        @media (min-width: 640px) {
-            .buttons-list-container { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+        .opt { position: relative; cursor: pointer; }
+        .opt.blue { --c: var(--tuwaiq); }
+        .opt.red { --c: var(--leap); }
+        .opt.green { --c: var(--safe); }
+
+        .opt input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
         }
 
-        .config-item {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid var(--border-color);
-            padding: 15px;
+        .opt > span {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 12px 6px;
             border-radius: 12px;
+            border: 1.5px solid var(--line);
+            background: var(--surface-2);
+            text-align: center;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .opt > span::before {
+            content: '';
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--c);
+            margin-bottom: 6px;
+        }
+        .opt b { font-size: 0.95rem; font-weight: 700; }
+        .opt small { font-size: 0.75rem; color: var(--muted); }
+
+        .opt input:checked + span {
+            border-color: var(--c);
+            background: color-mix(in srgb, var(--c) 15%, var(--surface-2));
+        }
+        .opt input:focus-visible + span { outline: 2px solid var(--c); outline-offset: 2px; }
+
+        .add-panel .btn { width: 100%; margin-top: 4px; }
+
+        .player-list {
+            list-style: none;
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
 
-        .config-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .config-item-header span {
-            font-size: 0.8rem;
-            color: #60a5fa;
-            font-weight: 700;
-        }
-
-        .delete-btn {
-            background: none;
-            border: none;
-            color: #f87171;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        /* --- شاشة المسابقة --- */
-        .game-top-bar {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        @media (min-width: 768px) {
-            .game-top-bar {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-            }
-        }
-
-        .scoreboards-wrapper {
+        .player-row {
+            --c: var(--safe);
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        @media (min-width: 768px) {
-            .scoreboards-wrapper { display: contents; }
-        }
-
-        .team-scoreboard {
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            padding: 12px 18px;
-            border-radius: 16px;
-            display: flex;
+            grid-template-columns: auto 1fr auto auto;
             align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            gap: 12px;
+            padding: 12px 12px 12px 8px;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+        }
+        .player-row.c-blue { --c: var(--tuwaiq); }
+        .player-row.c-red { --c: var(--leap); }
+        .player-row.is-new { animation: rowIn 0.4s ease; }
+
+        @keyframes rowIn {
+            from { opacity: 0; transform: translateY(-6px); background: color-mix(in srgb, var(--c) 25%, var(--surface-2)); }
+            to { opacity: 1; transform: none; }
         }
 
-        @media (min-width: 768px) {
-            .team-scoreboard { min-width: 260px; padding: 15px 25px; }
+        .player-row .bar {
+            width: 4px;
+            align-self: stretch;
+            border-radius: 4px;
+            background: var(--c);
         }
 
-        .team-scoreboard.tuwaiq { border-right: 5px solid var(--primary-tuwaiq); }
-        .team-scoreboard.leap { border-left: 5px solid var(--primary-leap); }
-
-        .team-info h3 {
-            font-size: clamp(0.95rem, 2vw, 1.2rem);
-            font-weight: 700;
+        .pr-text { min-width: 0; }
+        .pr-text b {
+            display: block;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .pr-text span {
+            display: block;
+            color: var(--muted);
+            font-size: 0.88rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        .team-info span {
-            display: none;
-        }
-        @media (min-width: 640px) {
-            .team-info span { display: block; font-size: 0.75rem; color: var(--text-muted); }
-        }
-
-        .team-score {
-            font-size: clamp(1.6rem, 4vw, 2.2rem);
-            font-weight: 900;
+        .tag {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--c);
+            background: color-mix(in srgb, var(--c) 14%, transparent);
+            padding: 4px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
         }
 
-        .game-controls-top {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: var(--faint);
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: background 0.2s, color 0.2s;
+        }
+        .icon-btn:hover,
+        .icon-btn:focus-visible {
+            background: rgba(239, 68, 68, 0.14);
+            color: var(--leap);
+            outline: none;
         }
 
-        /* --- شبكة أزرار المسابقة (3D Flip Cards) --- */
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 36px 16px;
+            border: 1px dashed var(--line-strong);
+            border-radius: 12px;
+            line-height: 1.8;
+        }
+        .empty small { color: var(--faint); }
+        .empty.error { color: #f87171; border-color: rgba(239, 68, 68, 0.4); }
+
+        .start-bar {
+            position: sticky;
+            bottom: 0;
+            padding: 20px 0 16px;
+            margin-top: 4px;
+            background: linear-gradient(to bottom, transparent, var(--bg) 35%);
+            z-index: 10;
+        }
+
+        .btn-start {
+            width: 100%;
+            font-size: 1.15rem;
+            padding: 18px;
+            color: #fff;
+            background: linear-gradient(90deg, var(--leap), #7c3aed 50%, var(--tuwaiq));
+            box-shadow: 0 12px 40px -12px rgba(124, 58, 237, 0.7);
+            flex-direction: column;
+            gap: 0;
+        }
+        .btn-start:hover { box-shadow: 0 14px 48px -10px rgba(124, 58, 237, 0.9); }
+        .btn-start small {
+            font-family: var(--font-body);
+            font-weight: 500;
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+
+        /* ================= شاشة اللعب ================= */
+        .game-meta {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            padding: 18px 0 14px;
+        }
+        .game-meta b { color: var(--text); font-variant-numeric: tabular-nums; }
+
         .game-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
         }
+        @media (min-width: 640px) { .game-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; } }
+        @media (min-width: 960px) { .game-grid { grid-template-columns: repeat(4, 1fr); } }
 
-        @media (min-width: 640px) {
-            .game-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
-        }
-
-        .flip-card {
-            background-color: transparent;
-            height: 130px;
+        .card {
+            background: none;
+            border: none;
+            padding: 0;
+            font: inherit;
+            color: inherit;
+            aspect-ratio: 4 / 3;
+            min-height: 120px;
             perspective: 1000px;
             cursor: pointer;
+            outline: none;
         }
 
-        @media (min-width: 640px) {
-            .flip-card { height: 150px; }
-        }
-
-        .flip-card-inner {
+        .card-inner {
             position: relative;
             width: 100%;
             height: 100%;
-            text-align: center;
-            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
             transform-style: preserve-3d;
-            border-radius: 16px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            transition: transform 0.7s cubic-bezier(0.3, 1.35, 0.5, 1);
         }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card.flipped { cursor: default; }
 
-        .flip-card.flipped .flip-card-inner {
-            transform: rotateY(180deg);
+        @media (hover: hover) {
+            .card:not(.flipped):hover .card-inner { transform: translateY(-4px); }
+            .card:not(.flipped):hover .card-front { border-color: rgba(255, 255, 255, 0.3); }
         }
+        .card:focus-visible .card-front { border-color: #fff; }
 
-        .flip-card-front, .flip-card-back {
+        .card-face {
             position: absolute;
-            width: 100%;
-            height: 100%;
+            inset: 0;
+            -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
             border-radius: 16px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 12px;
-            font-weight: 700;
-            border: 1px solid var(--border-color);
-        }
-
-        .flip-card-front {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            color: #fff;
-            font-size: clamp(1rem, 2.5vw, 1.25rem);
-            border-bottom: 4px solid #3b82f6;
-            transition: all 0.3s;
-        }
-
-        .flip-card:hover .flip-card-front {
-            border-color: #60a5fa;
-            transform: translateY(-2px);
-        }
-
-        .flip-card-back {
-            transform: rotateY(180deg);
-            color: #ffffff;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .flip-card-back .player-name {
-            font-size: clamp(1.1rem, 2.5vw, 1.35rem);
-            font-weight: 900;
-        }
-
-        .flip-card-back .effect-tag {
-            font-size: clamp(0.65rem, 1.5vw, 0.75rem);
-            background: rgba(0,0,0,0.25);
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-weight: 600;
-        }
-
-        /* --- شاشة الفائز --- */
-        .winner-card {
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 40px 20px;
+            gap: 8px;
+            padding: 14px;
             text-align: center;
-            max-width: 600px;
-            margin: 30px auto;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
         }
 
-        .winner-card h2 {
-            font-size: clamp(1.8rem, 4vw, 2.4rem);
-            margin-bottom: 12px;
+        .card-front {
+            background: linear-gradient(160deg, var(--surface-3), var(--surface));
+            border: 1px solid var(--line-strong);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 30px -14px rgba(0, 0, 0, 0.9);
+            transition: border-color 0.2s;
+        }
+
+        .card-num {
+            position: absolute;
+            top: 10px;
+            inset-inline-start: 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--faint);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .card-q {
+            position: absolute;
+            bottom: -8px;
+            inset-inline-end: 10px;
+            font-family: var(--font-display);
             font-weight: 900;
+            font-size: 4rem;
+            line-height: 1;
+            color: rgba(255, 255, 255, 0.04);
         }
 
-        .winner-card p {
-            font-size: clamp(1rem, 2vw, 1.15rem);
-            color: var(--text-muted);
-            margin-bottom: 25px;
-            line-height: 1.6;
+        .card-title {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: clamp(1rem, 3.8vw, 1.3rem);
+            line-height: 1.5;
+            overflow-wrap: anywhere;
         }
 
-        .trophy-icon {
-            font-size: 4.5rem;
-            margin-bottom: 15px;
-            animation: bounce 1.5s infinite alternate;
+        .card-back {
+            transform: rotateY(180deg);
+            color: #fff;
+        }
+        .card-back.c-blue { background: linear-gradient(160deg, #5b9bff, #1d4ed8); box-shadow: 0 0 36px -8px var(--tuwaiq); }
+        .card-back.c-red { background: linear-gradient(160deg, #ff6b6b, #b91c1c); box-shadow: 0 0 36px -8px var(--leap); }
+        .card-back.c-green { background: linear-gradient(160deg, #2fd29c, #047857); box-shadow: 0 0 36px -8px var(--safe); }
+
+        .card-player {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: clamp(1.1rem, 4.4vw, 1.5rem);
+            line-height: 1.4;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+            overflow-wrap: anywhere;
+        }
+
+        .card-effect {
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.22);
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+
+        .game-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 28px;
+        }
+
+        /* ================= شاشة النتيجة ================= */
+        .result {
+            --win: var(--muted);
+            position: relative;
+            overflow: hidden;
+            max-width: 560px;
+            margin: 8px auto 0;
+            text-align: center;
+            padding: clamp(32px, 7vw, 52px) 20px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+        }
+        .result::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(70% 55% at 50% 0%, color-mix(in srgb, var(--win) 32%, transparent), transparent 70%);
+        }
+        .result > * { position: relative; }
+
+        .trophy {
+            font-size: 3.5rem;
+            line-height: 1;
+            display: inline-block;
+            animation: bounce 1.4s ease-in-out infinite alternate;
         }
 
         @keyframes bounce {
             from { transform: translateY(0); }
-            to { transform: translateY(-12px); }
+            to { transform: translateY(-10px); }
+        }
+
+        .result-title {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: clamp(2.2rem, 10vw, 3.4rem);
+            line-height: 1.4;
+            color: var(--win);
+            margin: 10px 0 18px;
+        }
+
+        .result-scores {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(18px, 6vw, 36px);
+            margin-bottom: 18px;
+        }
+
+        .rs {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: opacity 0.3s;
+        }
+        .rs span { font-size: 0.95rem; font-weight: 600; color: var(--muted); }
+        .rs b {
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: clamp(2.6rem, 11vw, 3.8rem);
+            line-height: 1.15;
+            font-variant-numeric: tabular-nums;
+        }
+        .rs.tuwaiq b { color: var(--tuwaiq); }
+        .rs.leap b { color: var(--leap); }
+        .rs.lost { opacity: 0.4; }
+        .rs-sep { color: var(--faint); font-size: 1.6rem; font-weight: 300; }
+
+        .result-desc {
+            color: var(--muted);
+            line-height: 1.8;
+            margin-bottom: 28px;
+        }
+        .result-desc strong { color: var(--text); }
+
+        .result-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        #confetti {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 300;
+        }
+
+        /* ================= تنبيهات ================= */
+        .toast {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translate(-50%, -12px);
+            max-width: calc(100% - 32px);
+            background: var(--surface-3);
+            border: 1px solid var(--line-strong);
+            color: var(--text);
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            font-weight: 500;
+            box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.8);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s, transform 0.25s;
+            z-index: 400;
+        }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+        .toast.error { border-color: rgba(239, 68, 68, 0.5); }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
 
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(9, 13, 22, 0.5); }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #2a3245; border-radius: 3px; }
     </style>
 </head>
-<body>
+<body data-screen="setup">
 
     <header>
-        <h1>تحدي العملاقين: طويق vs Leap</h1>
-        <p>منصة المسابقات التفاعلية المطورة</p>
+        <h1 class="sr-only">طويق ضد لييب</h1>
+        <div class="arena" aria-hidden="true">
+            <div class="team-side tuwaiq" id="side-tuwaiq">
+                <span class="team-name">طويق</span>
+                <span class="team-score" id="score-tuwaiq">0</span>
+            </div>
+            <div class="vs">ضد</div>
+            <div class="team-side leap" id="side-leap">
+                <span class="team-name">لييب</span>
+                <span class="team-score" id="score-leap">0</span>
+            </div>
+        </div>
+        <p class="tagline">اكشف البطاقات… والفريق الأقل نقاط يخسر</p>
     </header>
 
-    <div class="container">
+    <main>
 
-        <!-- ================= شاشة الإعداد والإدارة ================= -->
-        <div id="setup-screen" class="screen active">
-            <div class="setup-card">
-                <div class="setup-header">
-                    <h2>إعداد الألقاب واللاعبين</h2>
-                    <button class="btn btn-success" onclick="startTheGame()">🚀 بدء اللعب والانتقال للمسابقة</button>
-                </div>
+        <!-- ================= شاشة الإعداد ================= -->
+        <section id="setup-screen" class="screen active">
+            <div class="setup-layout">
+                <div class="panel add-panel">
+                    <div class="panel-head">
+                        <h2>أضف لاعب</h2>
+                        <span class="live" id="live-status"><i></i><span>جاري الاتصال</span></span>
+                    </div>
 
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="btn-title">لقب الزر (الظاهر للجميع)</label>
-                        <input type="text" id="btn-title" placeholder="مثال: السؤال الأول">
-                    </div>
-                    <div class="form-group">
-                        <label for="player-name">اسم اللاعب</label>
-                        <input type="text" id="player-name" placeholder="مثال: أحمد محمد">
-                    </div>
-                    <div class="form-group">
-                        <label for="bg-color">لون الخلفية وراء الاسم</label>
-                        <select id="bg-color">
-                            <option value="blue">أزرق (ينقص نقطة طويق)</option>
-                            <option value="red">أحمر (ينقص نقطة Leap)</option>
-                            <option value="green">أخضر (بدون نقص)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <button class="btn" onclick="addButtonConfig()" style="width: 100%;">➕ إضافة زر</button>
-                    </div>
-                </div>
-
-                <h3 style="margin-bottom: 12px; font-size: 1.05rem; color: #fff;">الأزرار المضافة حالياً (<span id="count-badge">0</span>)</h3>
-                <div class="buttons-list-container" id="buttons-list">
-                    <!-- تعبئة ديناميكية -->
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= شاشة المسابقة ================= -->
-        <div id="game-screen" class="screen">
-            <div class="game-top-bar">
-                <!-- في الجوال يظهران بجانب بعضهما، وفي الكمبيوتر يتوزعان -->
-                <div class="scoreboards-wrapper">
-                    <!-- نقاط طويق -->
-                    <div class="team-scoreboard tuwaiq">
-                        <div class="team-info">
-                            <h3 style="color: var(--primary-tuwaiq);">فريق طويق</h3>
-                            <span>الأكثر يفوز / الأقل يخسر</span>
+                    <form id="add-form" onsubmit="addButtonConfig(event)" novalidate>
+                        <div class="field">
+                            <label class="field-label" for="btn-title">عنوان البطاقة (يظهر للكل)</label>
+                            <input type="text" id="btn-title" placeholder="مثال: التحدي 5" maxlength="100" autocomplete="off">
                         </div>
-                        <div class="team-score" id="score-tuwaiq" style="color: var(--primary-tuwaiq);">0</div>
-                    </div>
-
-                    <!-- نقاط Leap -->
-                    <div class="team-scoreboard leap">
-                        <div class="team-score" id="score-leap" style="color: var(--primary-leap);">0</div>
-                        <div class="team-info" style="text-align: left;">
-                            <h3 style="color: var(--primary-leap);">فريق Leap</h3>
-                            <span>الأكثر يفوز / الأقل يخسر</span>
+                        <div class="field">
+                            <label class="field-label" for="player-name">اسم اللاعب (مخفي لين تنكشف)</label>
+                            <input type="text" id="player-name" placeholder="مثال: أحمد محمد" maxlength="100" autocomplete="off">
                         </div>
+                        <fieldset class="field">
+                            <legend class="field-label" style="margin-bottom: 8px;">لون البطاقة</legend>
+                            <div class="color-pick">
+                                <label class="opt blue">
+                                    <input type="radio" name="color" value="blue" checked>
+                                    <span><b>أزرق</b><small><span class="num">−1</span> طويق</small></span>
+                                </label>
+                                <label class="opt red">
+                                    <input type="radio" name="color" value="red">
+                                    <span><b>أحمر</b><small><span class="num">−1</span> لييب</small></span>
+                                </label>
+                                <label class="opt green">
+                                    <input type="radio" name="color" value="green">
+                                    <span><b>أخضر</b><small>بدون خصم</small></span>
+                                </label>
+                            </div>
+                        </fieldset>
+                        <button type="submit" class="btn btn-primary" id="add-btn">إضافة</button>
+                    </form>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-head">
+                        <h2>اللاعبين <span class="count" id="count-badge">0</span></h2>
                     </div>
-                </div>
-
-                <div class="game-controls-top">
-                    <button class="btn btn-danger" onclick="endMatch()" style="padding: 10px 16px; font-size: 0.85rem;">🏁 إنهاء</button>
-                    <button class="btn" onclick="goToSetup()" style="background: #334155; padding: 10px 16px; font-size: 0.85rem;">⚙️ الإعدادات</button>
+                    <ul class="player-list" id="buttons-list"></ul>
                 </div>
             </div>
 
-            <!-- شبكة الأزرار -->
-            <div class="game-grid" id="game-buttons-grid">
-                <!-- تعبئة ديناميكية -->
+            <div class="start-bar">
+                <button class="btn btn-start" onclick="startTheGame()">
+                    ابدأ المباراة
+                    <small id="start-hint">كل فريق يبدأ بنفس عدد البطاقات</small>
+                </button>
             </div>
-        </div>
+        </section>
 
-        <!-- ================= شاشة إعلان الفائز والخاسر ================= -->
-        <div id="winner-screen" class="screen">
-            <div class="winner-card">
-                <div class="trophy-icon">🏆</div>
-                <h2 id="winner-title-text">نتيجة المباراة</h2>
-                <p id="winner-desc-text">تفاصيل الأداء والنتيجة النهائية</p>
-                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                    <button class="btn btn-success" onclick="resetGameSession()">🔄 إعادة المسابقة</button>
-                    <button class="btn" onclick="goToSetup()" style="background: #334155;">⚙️ تعديل الإعدادات</button>
+        <!-- ================= شاشة اللعب ================= -->
+        <section id="game-screen" class="screen">
+            <p class="game-meta" id="game-meta"></p>
+            <div class="game-grid" id="game-buttons-grid"></div>
+            <div class="game-actions">
+                <button class="btn btn-primary" onclick="endMatch()">إنهاء المباراة</button>
+                <button class="btn btn-ghost" onclick="goToSetup()">رجوع للاعبين</button>
+            </div>
+        </section>
+
+        <!-- ================= شاشة النتيجة ================= -->
+        <section id="winner-screen" class="screen">
+            <div class="result" id="result-card">
+                <div class="trophy">🏆</div>
+                <h2 class="result-title" id="winner-title-text">النتيجة</h2>
+                <div class="result-scores">
+                    <div class="rs tuwaiq" id="rs-tuwaiq"><span>طويق</span><b id="final-tuwaiq">0</b></div>
+                    <div class="rs-sep">–</div>
+                    <div class="rs leap" id="rs-leap"><span>لييب</span><b id="final-leap">0</b></div>
+                </div>
+                <p class="result-desc" id="winner-desc-text"></p>
+                <div class="result-actions">
+                    <button class="btn btn-primary" onclick="resetGameSession()">مباراة جديدة</button>
+                    <button class="btn btn-ghost" onclick="goToSetup()">تعديل اللاعبين</button>
                 </div>
             </div>
-        </div>
+        </section>
 
-    </div>
+    </main>
+
+    <canvas id="confetti"></canvas>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.99.3/dist/umd/supabase.min.js"></script>
     <script>
@@ -540,7 +896,7 @@
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const PLAYERS_TABLE = 'game_players';
 
-        // --- نظام الأصوات الحماسية (Web Audio API - متوافق مع متصفحات الجوال والكمبيوتر) ---
+        // --- الأصوات (Web Audio API) ---
         let audioCtx = null;
 
         function initAudio() {
@@ -556,7 +912,7 @@
             try {
                 initAudio();
                 if (!audioCtx) return;
-                
+
                 const osc = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
                 osc.connect(gainNode);
@@ -580,10 +936,10 @@
                     osc.start(now);
                     osc.stop(now + 0.25);
                 } else if (type === 'win') {
-                    let notes = [440, 554, 659, 880];
+                    const notes = [440, 554, 659, 880];
                     notes.forEach((freq, index) => {
-                        let o = audioCtx.createOscillator();
-                        let g = audioCtx.createGain();
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
                         o.type = 'sine';
                         o.frequency.value = freq;
                         o.connect(g);
@@ -595,17 +951,24 @@
                     });
                 }
             } catch (e) {
-                console.log("Audio skipped", e);
+                console.log('Audio skipped', e);
             }
         }
 
         // --- البيانات والحالة ---
+        const COLOR_INFO = {
+            blue: { tag: '<span class="num">−1</span> طويق', effect: 'خصم نقطة من طويق' },
+            red: { tag: '<span class="num">−1</span> لييب', effect: 'خصم نقطة من لييب' },
+            green: { tag: 'آمنة', effect: 'آمنة · بدون خصم' }
+        };
+
         // القائمة المشتركة (تُحمّل من قاعدة البيانات)
         let buttonsConfig = [];
-        // نسخة ثابتة من القائمة وقت بدء المسابقة حتى لا تتغير البطاقات أثناء اللعب
+        // نسخة ثابتة من القائمة وقت بدء المباراة حتى لا تتغير البطاقات أثناء اللعب
         let gameCards = [];
         let playersLoaded = false;
-
+        let renderedIds = new Set();
+        let revealedCards = {};
         let scores = { tuwaiq: 0, leap: 0 };
 
         function escapeHtml(text) {
@@ -621,6 +984,27 @@
             return { id: row.id, title: row.title, playerName: row.player_name, color: row.color };
         }
 
+        function colorInfo(color) {
+            return COLOR_INFO[color] || COLOR_INFO.green;
+        }
+
+        // --- تنبيه صغير بدل نوافذ alert ---
+        let toastTimer = null;
+        function toast(message, type) {
+            const el = document.getElementById('toast');
+            el.textContent = message;
+            el.className = 'toast show' + (type === 'error' ? ' error' : '');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+        }
+
+        function setLiveStatus(state) {
+            const el = document.getElementById('live-status');
+            el.className = 'live ' + state;
+            el.querySelector('span').textContent =
+                state === 'on' ? 'مباشر' : (state === 'off' ? 'غير متصل' : 'جاري الاتصال');
+        }
+
         async function loadPlayers() {
             const { data, error } = await db
                 .from(PLAYERS_TABLE)
@@ -632,14 +1016,14 @@
                 console.error('Failed to load players', error);
                 if (!playersLoaded) {
                     document.getElementById('buttons-list').innerHTML =
-                        `<p style="color: #f87171; grid-column: 1/-1; text-align: center; padding: 15px;">تعذر تحميل اللاعبين. تأكد من الاتصال بالإنترنت ثم حدّث الصفحة.</p>`;
+                        `<li class="empty error">تعذر تحميل اللاعبين<br><small>تأكد من الاتصال بالإنترنت ثم حدّث الصفحة</small></li>`;
                 }
                 return;
             }
 
             buttonsConfig = data.map(rowToConfig);
-            playersLoaded = true;
             renderSetupList();
+            playersLoaded = true;
         }
 
         // إعادة التحميل عند أي تغيير يصل من الأجهزة الأخرى
@@ -653,31 +1037,51 @@
             db.channel('game-players-changes')
                 .on('postgres_changes', { event: '*', schema: 'public', table: PLAYERS_TABLE }, scheduleReload)
                 .subscribe((status) => {
-                    // بعد إعادة الاتصال نحمّل القائمة من جديد حتى لا يفوتنا أي تغيير
-                    if (status === 'SUBSCRIBED') scheduleReload();
+                    if (status === 'SUBSCRIBED') {
+                        setLiveStatus('on');
+                        // بعد (إعادة) الاتصال نحمّل القائمة من جديد حتى لا يفوتنا أي تغيير
+                        scheduleReload();
+                    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                        setLiveStatus('off');
+                    }
                 });
         }
 
         window.onload = function() {
             document.getElementById('buttons-list').innerHTML =
-                `<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center; padding: 15px;">جاري تحميل اللاعبين...</p>`;
+                `<li class="empty">جاري تحميل اللاعبين…</li>`;
+            document.querySelectorAll('#add-form input[type="text"]').forEach(input => {
+                input.addEventListener('input', () => input.classList.remove('invalid'));
+            });
             loadPlayers();
             subscribeToPlayers();
         };
 
-        async function addButtonConfig() {
+        function markInvalid(input) {
+            input.classList.remove('invalid');
+            void input.offsetWidth;
+            input.classList.add('invalid');
+            input.focus();
+        }
+
+        let adding = false;
+        async function addButtonConfig(event) {
+            event.preventDefault();
+            if (adding) return;
+
             const titleInput = document.getElementById('btn-title');
             const nameInput = document.getElementById('player-name');
-            const colorSelect = document.getElementById('bg-color');
+            const color = document.querySelector('input[name="color"]:checked').value;
 
             const title = titleInput.value.trim();
             const playerName = nameInput.value.trim();
-            const color = colorSelect.value;
 
-            if (!title || !playerName) {
-                alert('الرجاء إدخال لقب الزر واسم اللاعب.');
-                return;
-            }
+            if (!title) { markInvalid(titleInput); return; }
+            if (!playerName) { markInvalid(nameInput); return; }
+
+            const addBtn = document.getElementById('add-btn');
+            adding = true;
+            addBtn.disabled = true;
 
             const { data, error } = await db
                 .from(PLAYERS_TABLE)
@@ -685,9 +1089,12 @@
                 .select('id, title, player_name, color')
                 .single();
 
+            adding = false;
+            addBtn.disabled = false;
+
             if (error) {
                 console.error('Failed to add player', error);
-                alert('تعذر إضافة اللاعب. تأكد من الاتصال بالإنترنت وحاول مرة ثانية.');
+                toast('ما قدرنا نضيف اللاعب، تأكد من الإنترنت وجرب مرة ثانية', 'error');
                 return;
             }
 
@@ -708,7 +1115,7 @@
 
             if (error) {
                 console.error('Failed to delete player', error);
-                alert('تعذر حذف اللاعب. تأكد من الاتصال بالإنترنت وحاول مرة ثانية.');
+                toast('ما قدرنا نحذف اللاعب، تأكد من الإنترنت وجرب مرة ثانية', 'error');
                 return;
             }
 
@@ -716,37 +1123,44 @@
             renderSetupList();
         }
 
+        const TRASH_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>`;
+
         function renderSetupList() {
             const listEl = document.getElementById('buttons-list');
-            document.getElementById('count-badge').textContent = buttonsConfig.length;
-            
-            if (buttonsConfig.length === 0) {
-                listEl.innerHTML = `<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center; padding: 15px;">لا توجد أزرار مضافة حالياً.</p>`;
+            const count = buttonsConfig.length;
+            document.getElementById('count-badge').textContent = count;
+            document.getElementById('start-hint').textContent = count
+                ? `${count} بطاقات · كل فريق يبدأ بـ ${count} نقاط`
+                : 'أضف لاعب واحد على الأقل';
+
+            if (count === 0) {
+                listEl.innerHTML = `<li class="empty">ما فيه لاعبين لسا<br><small>أضف أول لاعب من النموذج</small></li>`;
+                renderedIds = new Set();
                 return;
             }
 
-            listEl.innerHTML = '';
-            buttonsConfig.forEach((btn, index) => {
-                let colorNameAr = btn.color === 'blue' ? 'أزرق (ينقص طويق)' : (btn.color === 'red' ? 'أحمر (ينقص Leap)' : 'أخضر (بدون نقص)');
-                let colorHex = btn.color === 'blue' ? '#3b82f6' : (btn.color === 'red' ? '#ef4444' : '#10b981');
-
-                listEl.innerHTML += `
-                    <div class="config-item">
-                        <div class="config-item-header">
-                            <span>#${index + 1}</span>
-                            <button class="delete-btn" onclick="removeButtonConfig(${Number(btn.id)})">🗑️ حذف</button>
+            listEl.innerHTML = buttonsConfig.map(btn => {
+                const isNew = playersLoaded && !renderedIds.has(btn.id);
+                return `
+                    <li class="player-row c-${escapeHtml(btn.color)}${isNew ? ' is-new' : ''}">
+                        <span class="bar"></span>
+                        <div class="pr-text">
+                            <b>${escapeHtml(btn.title)}</b>
+                            <span>${escapeHtml(btn.playerName)}</span>
                         </div>
-                        <div style="font-weight: 700; color: #fff;">اللقب: ${escapeHtml(btn.title)}</div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted);">اللاعب: ${escapeHtml(btn.playerName)}</div>
-                        <div style="font-size: 0.75rem; color: ${colorHex}; font-weight: 600;">${colorNameAr}</div>
-                    </div>
+                        <span class="tag">${colorInfo(btn.color).tag}</span>
+                        <button class="icon-btn" onclick="removeButtonConfig(${Number(btn.id)})" aria-label="حذف ${escapeHtml(btn.playerName)}" title="حذف">${TRASH_ICON}</button>
+                    </li>
                 `;
-            });
+            }).join('');
+
+            renderedIds = new Set(buttonsConfig.map(b => b.id));
         }
 
+        // --- اللعب ---
         function startTheGame() {
             if (buttonsConfig.length === 0) {
-                alert('يرجى إضافة زر واحد على الأقل قبل بدء اللعب!');
+                toast('أضف لاعب واحد على الأقل قبل ما تبدأ', 'error');
                 return;
             }
 
@@ -763,29 +1177,31 @@
 
         function renderGameGrid() {
             const gridEl = document.getElementById('game-buttons-grid');
-            gridEl.innerHTML = '';
 
-            gameCards.forEach((btn, index) => {
-                let bgHex = btn.color === 'blue' ? '#3b82f6' : (btn.color === 'red' ? '#ef4444' : '#10b981');
-                let effectText = btn.color === 'blue' ? '⬅️ خصم نقطة طويق' : (btn.color === 'red' ? '⬅️ خصم نقطة Leap' : '🛡️ آمن (بدون خصم)');
-
-                gridEl.innerHTML += `
-                    <div class="flip-card" id="card-${index}" onclick="revealCard(${index})">
-                        <div class="flip-card-inner">
-                            <div class="flip-card-front">
-                                <span>${escapeHtml(btn.title)}</span>
-                            </div>
-                            <div class="flip-card-back" style="background-color: ${bgHex};">
-                                <span class="player-name">${escapeHtml(btn.playerName)}</span>
-                                <span class="effect-tag">${effectText}</span>
-                            </div>
+            gridEl.innerHTML = gameCards.map((btn, index) => `
+                <button class="card" id="card-${index}" onclick="revealCard(${index})" aria-label="${escapeHtml(btn.title)}">
+                    <div class="card-inner">
+                        <div class="card-face card-front">
+                            <span class="card-num">${index + 1}</span>
+                            <span class="card-q">؟</span>
+                            <span class="card-title">${escapeHtml(btn.title)}</span>
+                        </div>
+                        <div class="card-face card-back c-${escapeHtml(btn.color)}">
+                            <span class="card-player">${escapeHtml(btn.playerName)}</span>
+                            <span class="card-effect">${colorInfo(btn.color).effect}</span>
                         </div>
                     </div>
-                `;
-            });
+                </button>
+            `).join('');
+
+            updateGameMeta();
         }
 
-        let revealedCards = {};
+        function updateGameMeta() {
+            const revealed = Object.keys(revealedCards).length;
+            document.getElementById('game-meta').innerHTML =
+                `انكشف <b>${revealed}</b> من <b>${gameCards.length}</b> بطاقات`;
+        }
 
         function revealCard(index) {
             const cardEl = document.getElementById(`card-${index}`);
@@ -793,19 +1209,36 @@
             const color = gameCards[index].color;
 
             cardEl.classList.add('flipped');
+            cardEl.setAttribute('aria-label', `${gameCards[index].title}: ${gameCards[index].playerName}`);
             revealedCards[index] = true;
+            updateGameMeta();
             playSound('flip');
 
             setTimeout(() => {
                 if (color === 'red') {
                     scores.leap = Math.max(0, scores.leap - 1);
+                    bumpScore('leap');
                     playSound('minus');
                 } else if (color === 'blue') {
                     scores.tuwaiq = Math.max(0, scores.tuwaiq - 1);
+                    bumpScore('tuwaiq');
                     playSound('minus');
                 }
                 updateScoreboard();
-            }, 300);
+            }, 350);
+        }
+
+        function bumpScore(team) {
+            const side = document.getElementById(`side-${team}`);
+            side.classList.remove('hit');
+            void side.offsetWidth;
+            side.classList.add('hit');
+
+            const minus = document.createElement('span');
+            minus.className = 'minus-float';
+            minus.textContent = '−1';
+            minus.addEventListener('animationend', () => minus.remove());
+            side.appendChild(minus);
         }
 
         function updateScoreboard() {
@@ -814,42 +1247,108 @@
         }
 
         function endMatch() {
-            let titleText = "";
-            let descText = "";
+            const card = document.getElementById('result-card');
+            const titleEl = document.getElementById('winner-title-text');
+            const descEl = document.getElementById('winner-desc-text');
+            const rsTuwaiq = document.getElementById('rs-tuwaiq');
+            const rsLeap = document.getElementById('rs-leap');
 
-            // قاعدة: الأقل نقاط هو الخاسر (وبالتالي الأكثر نقاط هو الفائز)
+            document.getElementById('final-tuwaiq').textContent = scores.tuwaiq;
+            document.getElementById('final-leap').textContent = scores.leap;
+            rsTuwaiq.classList.toggle('lost', scores.tuwaiq < scores.leap);
+            rsLeap.classList.toggle('lost', scores.leap < scores.tuwaiq);
+
+            let confettiColors;
+
+            // القاعدة: الأقل نقاط هو الخاسر
             if (scores.tuwaiq > scores.leap) {
-                titleText = "🎉 فوز فريق طويق!";
-                descText = `فريق طويق جمع (${scores.tuwaiq} نقاط) بينما جمع فريق Leap (${scores.leap} نقاط).<br>بما أن <strong>الأقل نقاط هو الخاسر</strong>، فإن <strong>فريق Leap خسر المسابقة</strong> ❌`;
+                card.style.setProperty('--win', 'var(--tuwaiq)');
+                titleEl.textContent = 'فاز طويق';
+                descEl.innerHTML = '<strong>لييب خسر</strong> لأن نقاطه أقل';
+                confettiColors = ['#3b82f6', '#60a5fa', '#93c5fd', '#ffffff'];
             } else if (scores.leap > scores.tuwaiq) {
-                titleText = "🎉 فوز فريق Leap!";
-                descText = `فريق Leap جمع (${scores.leap} نقاط) بينما جمع فريق طويق (${scores.tuwaiq} نقاط).<br>بما أن <strong>الأقل نقاط هو الخاسر</strong>، فإن <strong>فريق طويق خسر المسابقة</strong> ❌`;
+                card.style.setProperty('--win', 'var(--leap)');
+                titleEl.textContent = 'فاز لييب';
+                descEl.innerHTML = '<strong>طويق خسر</strong> لأن نقاطه أقل';
+                confettiColors = ['#ef4444', '#f87171', '#fca5a5', '#ffffff'];
             } else {
-                titleText = "🤝 تعادل تام بين الفريقين!";
-                descText = `كلا الفريقين حصلا على نفس عدد النقاط (${scores.tuwaiq} نقطة). لا يوجد خاسر!`;
+                card.style.setProperty('--win', '#a78bfa');
+                titleEl.textContent = 'تعادل!';
+                descEl.textContent = 'نفس النقاط بالضبط، ما فيه خاسر';
+                confettiColors = ['#3b82f6', '#ef4444', '#ffffff'];
             }
-
-            document.getElementById('winner-title-text').innerHTML = titleText;
-            document.getElementById('winner-desc-text').innerHTML = descText;
 
             switchScreen('winner-screen');
             playSound('win');
+            launchConfetti(confettiColors);
         }
 
         function resetGameSession() {
-            revealedCards = {};
             startTheGame();
         }
 
         function goToSetup() {
-            revealedCards = {};
             switchScreen('setup-screen');
         }
 
         function switchScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
+            document.body.dataset.screen = screenId.replace('-screen', '');
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- احتفال بالفوز ---
+        let confettiRaf = null;
+        function launchConfetti(colors) {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+            ctx.scale(dpr, dpr);
+
+            const pieces = Array.from({ length: 170 }, () => ({
+                x: w / 2 + (Math.random() - 0.5) * w * 0.25,
+                y: h * 0.3,
+                vx: (Math.random() - 0.5) * 16,
+                vy: -Math.random() * 15 - 5,
+                size: 7 + Math.random() * 7,
+                rot: Math.random() * Math.PI,
+                vr: (Math.random() - 0.5) * 0.35,
+                color: colors[Math.floor(Math.random() * colors.length)]
+            }));
+
+            const duration = 3200;
+            const start = performance.now();
+            cancelAnimationFrame(confettiRaf);
+
+            function frame(now) {
+                const elapsed = now - start;
+                ctx.clearRect(0, 0, w, h);
+                if (elapsed > duration) return;
+
+                ctx.globalAlpha = Math.max(0, 1 - elapsed / duration);
+                pieces.forEach(p => {
+                    p.vy += 0.38;
+                    p.vx *= 0.985;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rot += p.vr;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+                    ctx.restore();
+                });
+                confettiRaf = requestAnimationFrame(frame);
+            }
+            confettiRaf = requestAnimationFrame(frame);
         }
     </script>
 </body>
