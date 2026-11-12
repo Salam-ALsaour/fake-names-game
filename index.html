@@ -531,7 +531,15 @@
 
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.99.3/dist/umd/supabase.min.js"></script>
     <script>
+        // --- الاتصال بقاعدة البيانات المشتركة (Supabase) ---
+        // أي لاعب ينضاف أو ينحذف يظهر فوراً عند كل من فاتح الصفحة
+        const SUPABASE_URL = 'https://ttkvsoxzfhqcaqzopvaq.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_tMlScCfurHafq1BReDg0hg_xKKecVhE';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const PLAYERS_TABLE = 'game_players';
+
         // --- نظام الأصوات الحماسية (Web Audio API - متوافق مع متصفحات الجوال والكمبيوتر) ---
         let audioCtx = null;
 
@@ -592,20 +600,72 @@
         }
 
         // --- البيانات والحالة ---
-        let buttonsConfig = [
-            { title: "التحدي 1", playerName: "سعد القحطاني", color: "blue" },
-            { title: "التحدي 2", playerName: "فهد العتيبي", color: "red" },
-            { title: "التحدي 3", playerName: "نورة الدوسري", color: "green" },
-            { title: "التحدي 4", playerName: "سارة الشمري", color: "blue" }
-        ];
+        // القائمة المشتركة (تُحمّل من قاعدة البيانات)
+        let buttonsConfig = [];
+        // نسخة ثابتة من القائمة وقت بدء المسابقة حتى لا تتغير البطاقات أثناء اللعب
+        let gameCards = [];
+        let playersLoaded = false;
 
-        let scores = { tuwaiq: 4, leap: 4 };
+        let scores = { tuwaiq: 0, leap: 0 };
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function rowToConfig(row) {
+            return { id: row.id, title: row.title, playerName: row.player_name, color: row.color };
+        }
+
+        async function loadPlayers() {
+            const { data, error } = await db
+                .from(PLAYERS_TABLE)
+                .select('id, title, player_name, color')
+                .order('created_at', { ascending: true })
+                .order('id', { ascending: true });
+
+            if (error) {
+                console.error('Failed to load players', error);
+                if (!playersLoaded) {
+                    document.getElementById('buttons-list').innerHTML =
+                        `<p style="color: #f87171; grid-column: 1/-1; text-align: center; padding: 15px;">تعذر تحميل اللاعبين. تأكد من الاتصال بالإنترنت ثم حدّث الصفحة.</p>`;
+                }
+                return;
+            }
+
+            buttonsConfig = data.map(rowToConfig);
+            playersLoaded = true;
+            renderSetupList();
+        }
+
+        // إعادة التحميل عند أي تغيير يصل من الأجهزة الأخرى
+        let reloadTimer = null;
+        function scheduleReload() {
+            clearTimeout(reloadTimer);
+            reloadTimer = setTimeout(loadPlayers, 150);
+        }
+
+        function subscribeToPlayers() {
+            db.channel('game-players-changes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: PLAYERS_TABLE }, scheduleReload)
+                .subscribe((status) => {
+                    // بعد إعادة الاتصال نحمّل القائمة من جديد حتى لا يفوتنا أي تغيير
+                    if (status === 'SUBSCRIBED') scheduleReload();
+                });
+        }
 
         window.onload = function() {
-            renderSetupList();
+            document.getElementById('buttons-list').innerHTML =
+                `<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center; padding: 15px;">جاري تحميل اللاعبين...</p>`;
+            loadPlayers();
+            subscribeToPlayers();
         };
 
-        function addButtonConfig() {
+        async function addButtonConfig() {
             const titleInput = document.getElementById('btn-title');
             const nameInput = document.getElementById('player-name');
             const colorSelect = document.getElementById('bg-color');
@@ -619,7 +679,22 @@
                 return;
             }
 
-            buttonsConfig.push({ title, playerName, color });
+            const { data, error } = await db
+                .from(PLAYERS_TABLE)
+                .insert({ title, player_name: playerName, color })
+                .select('id, title, player_name, color')
+                .single();
+
+            if (error) {
+                console.error('Failed to add player', error);
+                alert('تعذر إضافة اللاعب. تأكد من الاتصال بالإنترنت وحاول مرة ثانية.');
+                return;
+            }
+
+            // نضيفه فوراً عندنا، وباقي الأجهزة يوصلها التحديث تلقائياً
+            if (!buttonsConfig.some(b => b.id === data.id)) {
+                buttonsConfig.push(rowToConfig(data));
+            }
             titleInput.value = '';
             nameInput.value = '';
             titleInput.focus();
@@ -628,8 +703,16 @@
             playSound('flip');
         }
 
-        function removeButtonConfig(index) {
-            buttonsConfig.splice(index, 1);
+        async function removeButtonConfig(id) {
+            const { error } = await db.from(PLAYERS_TABLE).delete().eq('id', id);
+
+            if (error) {
+                console.error('Failed to delete player', error);
+                alert('تعذر حذف اللاعب. تأكد من الاتصال بالإنترنت وحاول مرة ثانية.');
+                return;
+            }
+
+            buttonsConfig = buttonsConfig.filter(b => b.id !== id);
             renderSetupList();
         }
 
@@ -651,10 +734,10 @@
                     <div class="config-item">
                         <div class="config-item-header">
                             <span>#${index + 1}</span>
-                            <button class="delete-btn" onclick="removeButtonConfig(${index})">🗑️ حذف</button>
+                            <button class="delete-btn" onclick="removeButtonConfig(${Number(btn.id)})">🗑️ حذف</button>
                         </div>
-                        <div style="font-weight: 700; color: #fff;">اللقب: ${btn.title}</div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted);">اللاعب: ${btn.playerName}</div>
+                        <div style="font-weight: 700; color: #fff;">اللقب: ${escapeHtml(btn.title)}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">اللاعب: ${escapeHtml(btn.playerName)}</div>
                         <div style="font-size: 0.75rem; color: ${colorHex}; font-weight: 600;">${colorNameAr}</div>
                     </div>
                 `;
@@ -667,8 +750,10 @@
                 return;
             }
 
-            scores.tuwaiq = buttonsConfig.length;
-            scores.leap = buttonsConfig.length;
+            gameCards = buttonsConfig.slice();
+            revealedCards = {};
+            scores.tuwaiq = gameCards.length;
+            scores.leap = gameCards.length;
 
             updateScoreboard();
             renderGameGrid();
@@ -680,18 +765,18 @@
             const gridEl = document.getElementById('game-buttons-grid');
             gridEl.innerHTML = '';
 
-            buttonsConfig.forEach((btn, index) => {
+            gameCards.forEach((btn, index) => {
                 let bgHex = btn.color === 'blue' ? '#3b82f6' : (btn.color === 'red' ? '#ef4444' : '#10b981');
                 let effectText = btn.color === 'blue' ? '⬅️ خصم نقطة طويق' : (btn.color === 'red' ? '⬅️ خصم نقطة Leap' : '🛡️ آمن (بدون خصم)');
 
                 gridEl.innerHTML += `
-                    <div class="flip-card" id="card-${index}" onclick="revealCard(${index}, '${btn.color}')">
+                    <div class="flip-card" id="card-${index}" onclick="revealCard(${index})">
                         <div class="flip-card-inner">
                             <div class="flip-card-front">
-                                <span>${btn.title}</span>
+                                <span>${escapeHtml(btn.title)}</span>
                             </div>
                             <div class="flip-card-back" style="background-color: ${bgHex};">
-                                <span class="player-name">${btn.playerName}</span>
+                                <span class="player-name">${escapeHtml(btn.playerName)}</span>
                                 <span class="effect-tag">${effectText}</span>
                             </div>
                         </div>
@@ -702,9 +787,10 @@
 
         let revealedCards = {};
 
-        function revealCard(index, color) {
+        function revealCard(index) {
             const cardEl = document.getElementById(`card-${index}`);
-            if (revealedCards[index]) return;
+            if (revealedCards[index] || !gameCards[index]) return;
+            const color = gameCards[index].color;
 
             cardEl.classList.add('flipped');
             revealedCards[index] = true;
