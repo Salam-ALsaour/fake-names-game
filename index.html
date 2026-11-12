@@ -58,6 +58,8 @@
                 radial-gradient(55% 45% at 0% 0%, rgba(239, 68, 68, 0.2), transparent 70%);
         }
 
+        [hidden] { display: none !important; }
+
         .sr-only {
             position: absolute;
             width: 1px;
@@ -421,6 +423,98 @@
             border-radius: 12px;
         }
         .player-row.c-blue { --c: var(--tuwaiq); }
+        .player-row.c-hidden { --c: #3a4358; }
+        .player-row.mine { border-color: rgba(255, 255, 255, 0.24); }
+        .hidden-name { color: var(--faint) !important; }
+
+        .you-tag {
+            display: inline-block;
+            vertical-align: middle;
+            font-family: var(--font-body);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 1px 8px;
+            margin-inline-start: 6px;
+            border-radius: 999px;
+            background: #fff;
+            color: var(--bg);
+        }
+
+        .role-badge {
+            font-family: var(--font-body);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: rgba(250, 204, 21, 0.14);
+            color: #facc15;
+        }
+
+        .my-entry { text-align: center; padding: 4px 0; }
+        .my-entry .check {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 12px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--safe);
+        }
+        .my-entry h3 {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 1.15rem;
+            margin-bottom: 4px;
+        }
+        .my-entry p { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
+        .my-entry .player-list { text-align: start; margin-bottom: 12px; }
+
+        .btn-text {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 10px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .btn-text:hover { color: var(--leap); background: rgba(239, 68, 68, 0.1); }
+
+        .waiting {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 18px;
+            border-radius: 14px;
+            background: var(--surface);
+            border: 1px solid var(--line-strong);
+            color: var(--muted);
+            font-weight: 600;
+            text-align: center;
+        }
+        .result .waiting { background: var(--surface-2); }
+        .spinner {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            border: 2px solid var(--line-strong);
+            border-top-color: var(--text);
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .viewer-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 28px;
+        }
         .player-row.c-red { --c: var(--leap); }
         .player-row.is-new { animation: rowIn 0.4s ease; }
 
@@ -444,7 +538,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .pr-text span {
+        .pr-text > span {
             display: block;
             color: var(--muted);
             font-size: 0.88rem;
@@ -538,17 +632,22 @@
         @media (min-width: 960px) { .game-grid { grid-template-columns: repeat(4, 1fr); } }
 
         .card {
+            display: block;
+            width: 100%;
             background: none;
             border: none;
             padding: 0;
             font: inherit;
             color: inherit;
+            text-align: inherit;
             aspect-ratio: 4 / 3;
             min-height: 120px;
             perspective: 1000px;
-            cursor: pointer;
+            cursor: default;
             outline: none;
         }
+        body.is-admin .card:not(.flipped) { cursor: pointer; }
+        .card.pending .card-inner { transform: scale(0.96); }
 
         .card-inner {
             position: relative;
@@ -561,8 +660,8 @@
         .card.flipped { cursor: default; }
 
         @media (hover: hover) {
-            .card:not(.flipped):hover .card-inner { transform: translateY(-4px); }
-            .card:not(.flipped):hover .card-front { border-color: rgba(255, 255, 255, 0.3); }
+            body.is-admin .card:not(.flipped):hover .card-inner { transform: translateY(-4px); }
+            body.is-admin .card:not(.flipped):hover .card-front { border-color: rgba(255, 255, 255, 0.3); }
         }
         .card:focus-visible .card-front { border-color: #fff; }
 
@@ -804,11 +903,11 @@
             <div class="setup-layout">
                 <div class="panel add-panel">
                     <div class="panel-head">
-                        <h2>أضف لاعب</h2>
+                        <h2><span id="form-heading">…</span> <span class="role-badge" id="admin-badge" hidden>آدمن</span></h2>
                         <span class="live" id="live-status"><i></i><span>جاري الاتصال</span></span>
                     </div>
 
-                    <form id="add-form" onsubmit="addButtonConfig(event)" novalidate>
+                    <form id="add-form" onsubmit="addButtonConfig(event)" novalidate hidden>
                         <div class="field">
                             <label class="field-label" for="btn-title">عنوان البطاقة (يظهر للكل)</label>
                             <input type="text" id="btn-title" placeholder="مثال: التحدي 5" maxlength="100" autocomplete="off">
@@ -834,8 +933,18 @@
                                 </label>
                             </div>
                         </fieldset>
-                        <button type="submit" class="btn btn-primary" id="add-btn">إضافة</button>
+                        <button type="submit" class="btn btn-primary" id="add-btn">سجّل</button>
                     </form>
+
+                    <div class="my-entry" id="my-entry" hidden>
+                        <div class="check">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        </div>
+                        <h3>تم تسجيلك</h3>
+                        <p>انتظر الآدمن يبدأ المباراة</p>
+                        <ul class="player-list" id="my-entry-row"></ul>
+                        <button class="btn-text" onclick="removeMine()">حذف اسمي وتسجيل من جديد</button>
+                    </div>
                 </div>
 
                 <div class="panel">
@@ -847,10 +956,14 @@
             </div>
 
             <div class="start-bar">
-                <button class="btn btn-start" onclick="startTheGame()">
+                <button class="btn btn-start" id="start-btn" onclick="startTheGame()" hidden>
                     ابدأ المباراة
                     <small id="start-hint">كل فريق يبدأ بنفس عدد البطاقات</small>
                 </button>
+                <div class="waiting" id="setup-waiting" hidden>
+                    <span class="spinner"></span>
+                    بانتظار الآدمن يبدأ المباراة
+                </div>
             </div>
         </section>
 
@@ -858,10 +971,11 @@
         <section id="game-screen" class="screen">
             <p class="game-meta" id="game-meta"></p>
             <div class="game-grid" id="game-buttons-grid"></div>
-            <div class="game-actions">
+            <div class="game-actions" id="game-admin-actions" hidden>
                 <button class="btn btn-primary" onclick="endMatch()">إنهاء المباراة</button>
                 <button class="btn btn-ghost" onclick="goToSetup()">رجوع للاعبين</button>
             </div>
+            <p class="viewer-note" id="game-viewer-note" hidden>الآدمن يكشف البطاقات… والنقاط تتحدث عندك مباشرة</p>
         </section>
 
         <!-- ================= شاشة النتيجة ================= -->
@@ -875,9 +989,13 @@
                     <div class="rs leap" id="rs-leap"><span>لييب</span><b id="final-leap">0</b></div>
                 </div>
                 <p class="result-desc" id="winner-desc-text"></p>
-                <div class="result-actions">
+                <div class="result-actions" id="result-admin-actions" hidden>
                     <button class="btn btn-primary" onclick="resetGameSession()">مباراة جديدة</button>
                     <button class="btn btn-ghost" onclick="goToSetup()">تعديل اللاعبين</button>
+                </div>
+                <div class="waiting" id="result-waiting" hidden>
+                    <span class="spinner"></span>
+                    بانتظار الآدمن يبدأ مباراة جديدة
                 </div>
             </div>
         </section>
@@ -890,23 +1008,75 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.99.3/dist/umd/supabase.min.js"></script>
     <script>
         // --- الاتصال بقاعدة البيانات المشتركة (Supabase) ---
-        // أي لاعب ينضاف أو ينحذف يظهر فوراً عند كل من فاتح الصفحة
+        // كل شي (اللاعبين، بدء المباراة، كشف البطاقات، النقاط) يمر عبر دوال في قاعدة البيانات
+        // تتحقق من الصلاحيات، فما أحد يقدر يتجاوزها من المتصفح.
         const SUPABASE_URL = 'https://ttkvsoxzfhqcaqzopvaq.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_tMlScCfurHafq1BReDg0hg_xKKecVhE';
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const PLAYERS_TABLE = 'game_players';
+
+        const DEVICE_STORAGE_KEY = 'tl_device_id';
+        const ADMIN_STORAGE_KEY = 'tl_admin_key';
+
+        // --- هوية الجهاز: كل جهاز يقدر يسجل اسم واحد ---
+        function randomUuid() {
+            if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+            const b = crypto.getRandomValues(new Uint8Array(16));
+            b[6] = (b[6] & 0x0f) | 0x40;
+            b[8] = (b[8] & 0x3f) | 0x80;
+            const h = Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+            return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+        }
+
+        function getDeviceId() {
+            let id = null;
+            try { id = localStorage.getItem(DEVICE_STORAGE_KEY); } catch (e) {}
+            if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+                id = randomUuid();
+                try { localStorage.setItem(DEVICE_STORAGE_KEY, id); } catch (e) {}
+            }
+            return id;
+        }
+
+        // --- كلمة سر الآدمن من الرابط: ...#admin=كلمة_السر ---
+        // نحفظها في الجهاز ونشيلها من شريط العنوان حتى ما تبين لو انعرضت الشاشة
+        function readAdminKey() {
+            const fromHash = new URLSearchParams(location.hash.replace(/^#/, '')).get('admin');
+            const query = new URLSearchParams(location.search);
+            const fromQuery = query.get('admin');
+            const key = fromHash || fromQuery;
+
+            if (key) {
+                try { localStorage.setItem(ADMIN_STORAGE_KEY, key); } catch (e) {}
+                query.delete('admin');
+                const qs = query.toString();
+                history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+                return key;
+            }
+            try { return localStorage.getItem(ADMIN_STORAGE_KEY); } catch (e) { return null; }
+        }
+
+        const DEVICE_ID = getDeviceId();
+        let adminKey = readAdminKey();
+        let isAdmin = false;
+        let view = null;          // آخر حالة وصلت من السيرفر
+        let renderedIds = new Set();
+        let listRenderedOnce = false;
 
         // --- الأصوات (Web Audio API) ---
         let audioCtx = null;
 
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } catch (e) {}
         }
+        // المتصفحات ما تشغل الصوت إلا بعد أول لمسة
+        document.addEventListener('pointerdown', initAudio, { once: true });
 
         function playSound(type) {
             try {
@@ -955,21 +1125,27 @@
             }
         }
 
-        // --- البيانات والحالة ---
+        // --- أدوات ---
         const COLOR_INFO = {
             blue: { tag: '<span class="num">−1</span> طويق', effect: 'خصم نقطة من طويق' },
             red: { tag: '<span class="num">−1</span> لييب', effect: 'خصم نقطة من لييب' },
             green: { tag: 'آمنة', effect: 'آمنة · بدون خصم' }
         };
 
-        // القائمة المشتركة (تُحمّل من قاعدة البيانات)
-        let buttonsConfig = [];
-        // نسخة ثابتة من القائمة وقت بدء المباراة حتى لا تتغير البطاقات أثناء اللعب
-        let gameCards = [];
-        let playersLoaded = false;
-        let renderedIds = new Set();
-        let revealedCards = {};
-        let scores = { tuwaiq: 0, leap: 0 };
+        const ERROR_MESSAGES = {
+            already_registered: 'سجلت اسمك قبل، كل جهاز يقدر يسجل اسم واحد بس',
+            game_running: 'ما تقدر تعدل اللاعبين أثناء المباراة',
+            not_admin: 'هذي الخاصية للآدمن بس',
+            no_players: 'أضف لاعب واحد على الأقل قبل ما تبدأ'
+        };
+
+        function errorMessage(error, fallback) {
+            const msg = (error && error.message) || '';
+            for (const key in ERROR_MESSAGES) {
+                if (msg.includes(key)) return ERROR_MESSAGES[key];
+            }
+            return fallback;
+        }
 
         function escapeHtml(text) {
             return String(text)
@@ -980,22 +1156,17 @@
                 .replace(/'/g, '&#39;');
         }
 
-        function rowToConfig(row) {
-            return { id: row.id, title: row.title, playerName: row.player_name, color: row.color };
+        function safeColor(color) {
+            return COLOR_INFO[color] ? color : 'green';
         }
 
-        function colorInfo(color) {
-            return COLOR_INFO[color] || COLOR_INFO.green;
-        }
-
-        // --- تنبيه صغير بدل نوافذ alert ---
         let toastTimer = null;
         function toast(message, type) {
             const el = document.getElementById('toast');
             el.textContent = message;
             el.className = 'toast show' + (type === 'error' ? ' error' : '');
             clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+            toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
         }
 
         function setLiveStatus(state) {
@@ -1005,57 +1176,158 @@
                 state === 'on' ? 'مباشر' : (state === 'off' ? 'غير متصل' : 'جاري الاتصال');
         }
 
-        async function loadPlayers() {
-            const { data, error } = await db
-                .from(PLAYERS_TABLE)
-                .select('id, title, player_name, color')
-                .order('created_at', { ascending: true })
-                .order('id', { ascending: true });
+        function show(id, visible) {
+            document.getElementById(id).hidden = !visible;
+        }
 
+        // --- جلب الحالة والمزامنة المباشرة ---
+        async function fetchView() {
+            const { data, error } = await db.rpc('game_view', { p_device_id: DEVICE_ID, p_admin_key: adminKey });
             if (error) {
-                console.error('Failed to load players', error);
-                if (!playersLoaded) {
+                console.error('Failed to load game', error);
+                if (!view) {
+                    document.getElementById('form-heading').textContent = 'تعذر الاتصال';
                     document.getElementById('buttons-list').innerHTML =
-                        `<li class="empty error">تعذر تحميل اللاعبين<br><small>تأكد من الاتصال بالإنترنت ثم حدّث الصفحة</small></li>`;
+                        `<li class="empty error">تعذر تحميل اللعبة<br><small>تأكد من الاتصال بالإنترنت ثم حدّث الصفحة</small></li>`;
                 }
                 return;
             }
-
-            buttonsConfig = data.map(rowToConfig);
-            renderSetupList();
-            playersLoaded = true;
+            applyView(data);
         }
 
-        // إعادة التحميل عند أي تغيير يصل من الأجهزة الأخرى
         let reloadTimer = null;
-        function scheduleReload() {
+        function scheduleReload(delay = 120) {
             clearTimeout(reloadTimer);
-            reloadTimer = setTimeout(loadPlayers, 150);
+            reloadTimer = setTimeout(fetchView, delay);
         }
 
-        function subscribeToPlayers() {
-            db.channel('game-players-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: PLAYERS_TABLE }, scheduleReload)
+        function subscribeToGame() {
+            db.channel('game-state-changes')
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_state' }, (payload) => {
+                    if (view && payload.new && payload.new.version <= view.version) return;
+                    scheduleReload();
+                })
                 .subscribe((status) => {
                     if (status === 'SUBSCRIBED') {
                         setLiveStatus('on');
-                        // بعد (إعادة) الاتصال نحمّل القائمة من جديد حتى لا يفوتنا أي تغيير
-                        scheduleReload();
+                        // بعد (إعادة) الاتصال نحمّل من جديد حتى لا يفوتنا أي تغيير
+                        scheduleReload(0);
                     } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
                         setLiveStatus('off');
                     }
                 });
         }
 
+        // الجوال يوقف الاتصال لما تطلع من المتصفح، فنحدّث أول ما ترجع
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) scheduleReload(0);
+        });
+
         window.onload = function() {
-            document.getElementById('buttons-list').innerHTML =
-                `<li class="empty">جاري تحميل اللاعبين…</li>`;
+            document.getElementById('buttons-list').innerHTML = `<li class="empty">جاري التحميل…</li>`;
             document.querySelectorAll('#add-form input[type="text"]').forEach(input => {
                 input.addEventListener('input', () => input.classList.remove('invalid'));
             });
-            loadPlayers();
-            subscribeToPlayers();
+            fetchView();
+            subscribeToGame();
         };
+
+        function applyView(next) {
+            if (!next) return;
+            // نتجاهل أي رد قديم وصل متأخر
+            if (view && next.version < view.version) return;
+
+            const prev = view;
+            const initial = !prev;
+            view = next;
+
+            if (initial && adminKey && !next.is_admin) {
+                toast('رابط الآدمن غلط، كلمة السر ما تطابق', 'error');
+                adminKey = null;
+                try { localStorage.removeItem(ADMIN_STORAGE_KEY); } catch (e) {}
+            }
+            isAdmin = !!next.is_admin;
+            document.body.classList.toggle('is-admin', isAdmin);
+
+            renderSetup();
+
+            if (next.phase === 'playing') {
+                renderGame(prev, initial);
+                switchScreen('game-screen');
+            } else if (next.phase === 'ended') {
+                renderResult(!initial && prev.phase !== 'ended');
+                switchScreen('winner-screen');
+            } else {
+                switchScreen('setup-screen');
+            }
+        }
+
+        // --- شاشة الإعداد ---
+        const TRASH_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>`;
+
+        function playerRowHtml(p, options = {}) {
+            const known = p.player_name !== undefined;
+            const color = known ? safeColor(p.color) : 'hidden';
+            const canDelete = !options.noDelete && (isAdmin || p.mine);
+            const isNew = options.animate && listRenderedOnce && !renderedIds.has(p.id);
+
+            return `
+                <li class="player-row c-${color}${p.mine ? ' mine' : ''}${isNew ? ' is-new' : ''}">
+                    <span class="bar"></span>
+                    <div class="pr-text">
+                        <b>${escapeHtml(p.title)}${p.mine && !isAdmin ? '<span class="you-tag">أنت</span>' : ''}</b>
+                        ${known
+                            ? `<span>${escapeHtml(p.player_name)}</span>`
+                            : `<span class="hidden-name">الاسم مخفي</span>`}
+                    </div>
+                    ${known ? `<span class="tag">${COLOR_INFO[color].tag}</span>` : '<span></span>'}
+                    ${canDelete
+                        ? `<button class="icon-btn" onclick="removeButtonConfig(${Number(p.id)})" aria-label="حذف ${escapeHtml(known ? p.player_name : p.title)}" title="حذف">${TRASH_ICON}</button>`
+                        : '<span></span>'}
+                </li>
+            `;
+        }
+
+        function renderSetup() {
+            const players = view.players;
+            const mine = players.find(p => p.mine);
+            const count = players.length;
+
+            document.getElementById('count-badge').textContent = count;
+            show('admin-badge', isAdmin);
+
+            if (isAdmin) {
+                document.getElementById('form-heading').textContent = 'أضف لاعب';
+                document.getElementById('add-btn').textContent = 'إضافة';
+                show('add-form', true);
+                show('my-entry', false);
+            } else if (mine) {
+                document.getElementById('form-heading').textContent = 'تسجيلك';
+                document.getElementById('my-entry-row').innerHTML = playerRowHtml(mine, { noDelete: true });
+                show('add-form', false);
+                show('my-entry', true);
+            } else {
+                document.getElementById('form-heading').textContent = 'سجّل اسمك';
+                document.getElementById('add-btn').textContent = 'سجّل';
+                show('add-form', true);
+                show('my-entry', false);
+            }
+
+            show('start-btn', isAdmin);
+            show('setup-waiting', !isAdmin);
+            document.getElementById('start-hint').textContent = count
+                ? `${count} بطاقات · كل فريق يبدأ بـ ${count} نقاط`
+                : 'أضف لاعب واحد على الأقل';
+
+            const listEl = document.getElementById('buttons-list');
+            if (count === 0) {
+                listEl.innerHTML = `<li class="empty">ما فيه لاعبين لسا<br><small>${isAdmin ? 'أضف أول لاعب من النموذج' : 'كن أول واحد يسجل اسمه'}</small></li>`;
+            } else {
+                listEl.innerHTML = players.map(p => playerRowHtml(p, { animate: true })).join('');
+            }
+            renderedIds = new Set(players.map(p => p.id));
+            listRenderedOnce = true;
+        }
 
         function markInvalid(input) {
             input.classList.remove('invalid');
@@ -1083,149 +1355,209 @@
             adding = true;
             addBtn.disabled = true;
 
-            const { data, error } = await db
-                .from(PLAYERS_TABLE)
-                .insert({ title, player_name: playerName, color })
-                .select('id, title, player_name, color')
-                .single();
+            const { data, error } = await db.rpc('game_add_player', {
+                p_device_id: DEVICE_ID,
+                p_title: title,
+                p_player_name: playerName,
+                p_color: color,
+                p_admin_key: adminKey
+            });
 
             adding = false;
             addBtn.disabled = false;
 
             if (error) {
                 console.error('Failed to add player', error);
-                toast('ما قدرنا نضيف اللاعب، تأكد من الإنترنت وجرب مرة ثانية', 'error');
+                toast(errorMessage(error, 'ما قدرنا نضيف الاسم، تأكد من الإنترنت وجرب مرة ثانية'), 'error');
+                fetchView();
                 return;
             }
 
-            // نضيفه فوراً عندنا، وباقي الأجهزة يوصلها التحديث تلقائياً
-            if (!buttonsConfig.some(b => b.id === data.id)) {
-                buttonsConfig.push(rowToConfig(data));
-            }
             titleInput.value = '';
             nameInput.value = '';
-            titleInput.focus();
+            if (isAdmin) titleInput.focus();
 
-            renderSetupList();
+            applyView(data);
             playSound('flip');
         }
 
         async function removeButtonConfig(id) {
-            const { error } = await db.from(PLAYERS_TABLE).delete().eq('id', id);
+            const { data, error } = await db.rpc('game_remove_player', {
+                p_device_id: DEVICE_ID,
+                p_player_id: id,
+                p_admin_key: adminKey
+            });
 
             if (error) {
                 console.error('Failed to delete player', error);
-                toast('ما قدرنا نحذف اللاعب، تأكد من الإنترنت وجرب مرة ثانية', 'error');
+                toast(errorMessage(error, 'ما قدرنا نحذف الاسم، تأكد من الإنترنت وجرب مرة ثانية'), 'error');
                 return;
             }
-
-            buttonsConfig = buttonsConfig.filter(b => b.id !== id);
-            renderSetupList();
+            applyView(data);
         }
 
-        const TRASH_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>`;
+        function removeMine() {
+            const mine = view && view.players.find(p => p.mine);
+            if (mine) removeButtonConfig(mine.id);
+        }
 
-        function renderSetupList() {
-            const listEl = document.getElementById('buttons-list');
-            const count = buttonsConfig.length;
-            document.getElementById('count-badge').textContent = count;
-            document.getElementById('start-hint').textContent = count
-                ? `${count} بطاقات · كل فريق يبدأ بـ ${count} نقاط`
-                : 'أضف لاعب واحد على الأقل';
+        // --- تحكم الآدمن ---
+        let adminBusy = false;
+        async function adminAction(action, failMessage, cardId) {
+            if (!isAdmin || adminBusy) return;
+            adminBusy = true;
+            const { data, error } = await db.rpc('game_admin', {
+                p_admin_key: adminKey,
+                p_action: action,
+                p_card_id: cardId === undefined ? null : cardId
+            });
+            adminBusy = false;
 
-            if (count === 0) {
-                listEl.innerHTML = `<li class="empty">ما فيه لاعبين لسا<br><small>أضف أول لاعب من النموذج</small></li>`;
-                renderedIds = new Set();
+            if (error) {
+                console.error('Admin action failed', action, error);
+                toast(errorMessage(error, failMessage), 'error');
                 return;
             }
-
-            listEl.innerHTML = buttonsConfig.map(btn => {
-                const isNew = playersLoaded && !renderedIds.has(btn.id);
-                return `
-                    <li class="player-row c-${escapeHtml(btn.color)}${isNew ? ' is-new' : ''}">
-                        <span class="bar"></span>
-                        <div class="pr-text">
-                            <b>${escapeHtml(btn.title)}</b>
-                            <span>${escapeHtml(btn.playerName)}</span>
-                        </div>
-                        <span class="tag">${colorInfo(btn.color).tag}</span>
-                        <button class="icon-btn" onclick="removeButtonConfig(${Number(btn.id)})" aria-label="حذف ${escapeHtml(btn.playerName)}" title="حذف">${TRASH_ICON}</button>
-                    </li>
-                `;
-            }).join('');
-
-            renderedIds = new Set(buttonsConfig.map(b => b.id));
+            applyView(data);
         }
 
-        // --- اللعب ---
         function startTheGame() {
-            if (buttonsConfig.length === 0) {
-                toast('أضف لاعب واحد على الأقل قبل ما تبدأ', 'error');
+            if (!view || view.players.length === 0) {
+                toast(ERROR_MESSAGES.no_players, 'error');
                 return;
             }
-
-            gameCards = buttonsConfig.slice();
-            revealedCards = {};
-            scores.tuwaiq = gameCards.length;
-            scores.leap = gameCards.length;
-
-            updateScoreboard();
-            renderGameGrid();
-            switchScreen('game-screen');
-            playSound('win');
+            adminAction('start', 'ما قدرنا نبدأ المباراة، جرب مرة ثانية');
         }
 
-        function renderGameGrid() {
-            const gridEl = document.getElementById('game-buttons-grid');
+        function endMatch() {
+            adminAction('end', 'ما قدرنا ننهي المباراة، جرب مرة ثانية');
+        }
 
-            gridEl.innerHTML = gameCards.map((btn, index) => `
-                <button class="card" id="card-${index}" onclick="revealCard(${index})" aria-label="${escapeHtml(btn.title)}">
+        function resetGameSession() {
+            adminAction('start', 'ما قدرنا نبدأ مباراة جديدة، جرب مرة ثانية');
+        }
+
+        function goToSetup() {
+            if (view && view.phase === 'playing' &&
+                !confirm('ترجع لقائمة اللاعبين؟ المباراة الحالية بتنلغي عند الكل')) {
+                return;
+            }
+            adminAction('setup', 'ما قدرنا نرجع للاعبين، جرب مرة ثانية');
+        }
+
+        // --- شاشة اللعب ---
+        function cardBackHtml(card) {
+            return `
+                <span class="card-player">${escapeHtml(card.player_name)}</span>
+                <span class="card-effect">${COLOR_INFO[safeColor(card.color)].effect}</span>
+            `;
+        }
+
+        function cardHtml(card, index) {
+            const tag = isAdmin ? 'button' : 'div';
+            const label = card.revealed ? `${card.title}: ${card.player_name}` : card.title;
+            return `
+                <${tag} class="card${card.revealed ? ' flipped' : ''}" id="card-${Number(card.id)}"
+                    ${isAdmin ? `onclick="revealCard(${Number(card.id)})"` : ''} aria-label="${escapeHtml(label)}">
                     <div class="card-inner">
                         <div class="card-face card-front">
                             <span class="card-num">${index + 1}</span>
                             <span class="card-q">؟</span>
-                            <span class="card-title">${escapeHtml(btn.title)}</span>
+                            <span class="card-title">${escapeHtml(card.title)}</span>
                         </div>
-                        <div class="card-face card-back c-${escapeHtml(btn.color)}">
-                            <span class="card-player">${escapeHtml(btn.playerName)}</span>
-                            <span class="card-effect">${colorInfo(btn.color).effect}</span>
+                        <div class="card-face card-back${card.revealed ? ' c-' + safeColor(card.color) : ''}">
+                            ${card.revealed ? cardBackHtml(card) : ''}
                         </div>
                     </div>
-                </button>
-            `).join('');
+                </${tag}>
+            `;
+        }
+
+        function cardsKey(v) {
+            return v.cards.map(c => c.id).join(',');
+        }
+
+        function renderGame(prev, initial) {
+            const gridEl = document.getElementById('game-buttons-grid');
+            const prevInGame = prev && prev.phase === 'playing';
+            const prevRevealed = new Set(prevInGame ? prev.cards.filter(c => c.revealed).map(c => c.id) : []);
+            const lostReveal = [...prevRevealed].some(id => !view.cards.some(c => c.id === id && c.revealed));
+
+            show('game-admin-actions', isAdmin);
+            show('game-viewer-note', !isAdmin);
+
+            const needsFullRender = !prevInGame || cardsKey(prev) !== cardsKey(view) || lostReveal
+                || prev.is_admin !== view.is_admin || !gridEl.children.length;
+
+            if (needsFullRender) {
+                gridEl.innerHTML = view.cards.map(cardHtml).join('');
+                updateScoreboard(view.score_tuwaiq, view.score_leap);
+                if (!initial) playSound('win');
+            } else {
+                const newlyRevealed = view.cards.filter(c => c.revealed && !prevRevealed.has(c.id));
+                newlyRevealed.forEach(flipCard);
+
+                if (newlyRevealed.length) {
+                    playSound('flip');
+                    const tuwaiq = view.score_tuwaiq;
+                    const leap = view.score_leap;
+                    const hitTuwaiq = newlyRevealed.some(c => c.color === 'blue');
+                    const hitLeap = newlyRevealed.some(c => c.color === 'red');
+                    setTimeout(() => {
+                        updateScoreboard(tuwaiq, leap);
+                        if (hitTuwaiq) bumpScore('tuwaiq');
+                        if (hitLeap) bumpScore('leap');
+                        if (hitTuwaiq || hitLeap) playSound('minus');
+                    }, 350);
+                } else {
+                    updateScoreboard(view.score_tuwaiq, view.score_leap);
+                }
+            }
 
             updateGameMeta();
+        }
+
+        function flipCard(card) {
+            const el = document.getElementById(`card-${card.id}`);
+            if (!el) return;
+            const back = el.querySelector('.card-back');
+            back.className = `card-face card-back c-${safeColor(card.color)}`;
+            back.innerHTML = cardBackHtml(card);
+            el.classList.remove('pending');
+            el.classList.add('flipped');
+            el.setAttribute('aria-label', `${card.title}: ${card.player_name}`);
         }
 
         function updateGameMeta() {
-            const revealed = Object.keys(revealedCards).length;
+            const revealed = view.cards.filter(c => c.revealed).length;
             document.getElementById('game-meta').innerHTML =
-                `انكشف <b>${revealed}</b> من <b>${gameCards.length}</b> بطاقات`;
+                `انكشف <b>${revealed}</b> من <b>${view.cards.length}</b> بطاقات`;
         }
 
-        function revealCard(index) {
-            const cardEl = document.getElementById(`card-${index}`);
-            if (revealedCards[index] || !gameCards[index]) return;
-            const color = gameCards[index].color;
+        const pendingReveals = new Set();
+        async function revealCard(id) {
+            if (!isAdmin || !view || view.phase !== 'playing') return;
+            const card = view.cards.find(c => c.id === id);
+            if (!card || card.revealed || pendingReveals.has(id)) return;
 
-            cardEl.classList.add('flipped');
-            cardEl.setAttribute('aria-label', `${gameCards[index].title}: ${gameCards[index].playerName}`);
-            revealedCards[index] = true;
-            updateGameMeta();
-            playSound('flip');
+            pendingReveals.add(id);
+            const el = document.getElementById(`card-${id}`);
+            if (el) el.classList.add('pending');
 
-            setTimeout(() => {
-                if (color === 'red') {
-                    scores.leap = Math.max(0, scores.leap - 1);
-                    bumpScore('leap');
-                    playSound('minus');
-                } else if (color === 'blue') {
-                    scores.tuwaiq = Math.max(0, scores.tuwaiq - 1);
-                    bumpScore('tuwaiq');
-                    playSound('minus');
-                }
-                updateScoreboard();
-            }, 350);
+            const { data, error } = await db.rpc('game_admin', {
+                p_admin_key: adminKey,
+                p_action: 'reveal',
+                p_card_id: id
+            });
+            pendingReveals.delete(id);
+
+            if (error) {
+                if (el) el.classList.remove('pending');
+                console.error('Reveal failed', error);
+                toast(errorMessage(error, 'ما قدرنا نكشف البطاقة، جرب مرة ثانية'), 'error');
+                return;
+            }
+            applyView(data);
         }
 
         function bumpScore(team) {
@@ -1241,32 +1573,37 @@
             side.appendChild(minus);
         }
 
-        function updateScoreboard() {
-            document.getElementById('score-tuwaiq').textContent = scores.tuwaiq;
-            document.getElementById('score-leap').textContent = scores.leap;
+        function updateScoreboard(tuwaiq, leap) {
+            document.getElementById('score-tuwaiq').textContent = tuwaiq;
+            document.getElementById('score-leap').textContent = leap;
         }
 
-        function endMatch() {
+        // --- شاشة النتيجة ---
+        function renderResult(celebrate) {
+            const tuwaiq = view.score_tuwaiq;
+            const leap = view.score_leap;
             const card = document.getElementById('result-card');
             const titleEl = document.getElementById('winner-title-text');
             const descEl = document.getElementById('winner-desc-text');
-            const rsTuwaiq = document.getElementById('rs-tuwaiq');
-            const rsLeap = document.getElementById('rs-leap');
 
-            document.getElementById('final-tuwaiq').textContent = scores.tuwaiq;
-            document.getElementById('final-leap').textContent = scores.leap;
-            rsTuwaiq.classList.toggle('lost', scores.tuwaiq < scores.leap);
-            rsLeap.classList.toggle('lost', scores.leap < scores.tuwaiq);
+            updateScoreboard(tuwaiq, leap);
+            document.getElementById('final-tuwaiq').textContent = tuwaiq;
+            document.getElementById('final-leap').textContent = leap;
+            document.getElementById('rs-tuwaiq').classList.toggle('lost', tuwaiq < leap);
+            document.getElementById('rs-leap').classList.toggle('lost', leap < tuwaiq);
+
+            show('result-admin-actions', isAdmin);
+            show('result-waiting', !isAdmin);
 
             let confettiColors;
 
             // القاعدة: الأقل نقاط هو الخاسر
-            if (scores.tuwaiq > scores.leap) {
+            if (tuwaiq > leap) {
                 card.style.setProperty('--win', 'var(--tuwaiq)');
                 titleEl.textContent = 'فاز طويق';
                 descEl.innerHTML = '<strong>لييب خسر</strong> لأن نقاطه أقل';
                 confettiColors = ['#3b82f6', '#60a5fa', '#93c5fd', '#ffffff'];
-            } else if (scores.leap > scores.tuwaiq) {
+            } else if (leap > tuwaiq) {
                 card.style.setProperty('--win', 'var(--leap)');
                 titleEl.textContent = 'فاز لييب';
                 descEl.innerHTML = '<strong>طويق خسر</strong> لأن نقاطه أقل';
@@ -1278,22 +1615,17 @@
                 confettiColors = ['#3b82f6', '#ef4444', '#ffffff'];
             }
 
-            switchScreen('winner-screen');
-            playSound('win');
-            launchConfetti(confettiColors);
-        }
-
-        function resetGameSession() {
-            startTheGame();
-        }
-
-        function goToSetup() {
-            switchScreen('setup-screen');
+            if (celebrate) {
+                playSound('win');
+                launchConfetti(confettiColors);
+            }
         }
 
         function switchScreen(screenId) {
+            const target = document.getElementById(screenId);
+            if (target.classList.contains('active')) return;
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
+            target.classList.add('active');
             document.body.dataset.screen = screenId.replace('-screen', '');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
